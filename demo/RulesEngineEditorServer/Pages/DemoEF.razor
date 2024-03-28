@@ -1,0 +1,142 @@
+﻿@*
+    // Copyright (c) Alex Reich.
+    // Licensed under the CC BY 4.0 License.
+*@
+@page "/DemoEF"
+@implements IDisposable
+@using RulesEngine.Models
+@using RulesEngineEditor.Models
+@using Microsoft.EntityFrameworkCore
+@using RulesEngineEditor.Data
+@using System.Text.Json;
+
+@inject IDbContextFactory<RulesEngineEditorDbContext> DbFactory
+
+ Last Saved: @lastSaved
+<RulesEngineEditorPage EditorRulesEngine="re" @bind-WorkflowDatas="WorkflowDatas" MenuButtons="menuButtons" WorkflowsSaved="Save" />
+
+@code {
+    private RulesEngineEditorDbContext db;
+    private RulesEngine.RulesEngine re;
+
+    private List<WorkflowData> _workflowDatas;
+    private List<WorkflowData> WorkflowDatas
+    {
+        get { return _workflowDatas; }
+        set
+        {
+            _workflowDatas = value;
+
+            //add any missing workflows into dbcontext
+            foreach (var wf in _workflowDatas)
+            {
+                if (!db.Workflows.Any(w => w.Id == wf.Id))
+                    db.Workflows.Add(wf);
+            }
+
+            //remove any missing workflows into dbcontext
+            foreach (var wf in db.Workflows)
+            {
+                if (!_workflowDatas.Any(w => w.Id == wf.Id))
+                    db.Workflows.Remove(wf);
+            }
+
+            try
+            {
+                if (db.ChangeTracker.HasChanges())
+                {
+                    db.SaveChanges(true);
+
+                    RefreshDB();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+    }
+
+    DateTime? lastSaved;
+
+    enum FooEnum
+    {
+        bar = 123
+    }
+
+    public void Dispose()
+    {
+        db?.Dispose();
+    }
+
+    void RefreshDB()
+    {
+        WorkflowDatas = db.Workflows.Include(i => i.GlobalParams.OrderBy(o => o.Seq)).Include(i => i.Rules.OrderBy(o => o.Seq)).ThenInclude(i => i.Rules.OrderBy(o => o.Seq)).ThenInclude(i => i.LocalParams.OrderBy(o => o.Seq)).ToList();
+    }
+
+    void Save(Workflow[] wfs)
+    {
+        lastSaved = DateTime.Now;
+        db.Workflows.UpdateRange(WorkflowDatas.ToList());
+        
+        var workflowdataforserialization = WorkflowDatas.Select(wd => new
+        {
+            //wd.Id,
+            wd.WorkflowName,
+            Rules = wd.Rules.Select(r => new
+            {
+                //r.Id,
+                r.RuleName,
+                r.LocalParams,
+                r.Properties,
+                r.Operator,
+                r.ErrorMessage,
+                r.Enabled,
+                r.WorkflowsToInject,
+                r.Expression,
+                r.Actions,
+                r.SuccessEvent,
+                //r.IsSuccess,
+                //r.ExceptionMessage,
+            }).ToList(),
+            // GlobalParams = wd.GlobalParams.Select(gp => new
+            // {
+            //     gp.Id,
+            // }).ToList(),
+        }).ToList();
+
+        string jsonData = JsonSerializer.Serialize(workflowdataforserialization);
+        SaveJsonData(jsonData);
+    }
+
+    void SaveJsonData(string jsonData)
+    {
+        var jsonDataModel = new JsonDataModel
+            {
+                JsonData = jsonData
+            };
+
+        db.JsonDataModels.Add(jsonDataModel);
+        db.SaveChanges();
+    }
+
+
+    private List<MenuButton> menuButtons = new List<MenuButton>();
+
+    protected override void OnInitialized()
+    {
+        menuButtons.Add(new MenuButton("NewWorkflows", false));
+        menuButtons.Add(new MenuButton("SaveWorkflow", true));
+
+        var settings = new ReSettings
+        {
+            CustomTypes = new Type[] { typeof(FooEnum) }
+        };
+        re = new RulesEngine.RulesEngine(new string[0], settings);
+
+        db = DbFactory.CreateDbContext();
+        db.Database.EnsureCreated();
+
+        RefreshDB();
+    }
+}
