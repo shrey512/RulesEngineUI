@@ -78,7 +78,7 @@
     {
         lastSaved = DateTime.Now;
         db.Workflows.UpdateRange(WorkflowDatas.ToList());
-        
+
         var workflowdataforserialization = WorkflowDatas.Select(wd => new
         {
             //wd.Id,
@@ -111,13 +111,32 @@
 
     void SaveJsonData(string jsonData)
     {
-        var jsonDataModel = new JsonDataModel
+        //Save exiting one without creating a new row eveytime its saved
+        var existingJsonDataModel = db.JsonDataModels.FirstOrDefault();
+
+        if(existingJsonDataModel != null)
+        {
+            existingJsonDataModel.JsonData = jsonData;
+            db.JsonDataModels.Update(existingJsonDataModel);
+        }
+        else
+        {
+            var newjsonDataModel = new JsonDataModel
             {
                 JsonData = jsonData
             };
-
-        db.JsonDataModels.Add(jsonDataModel);
+            db.JsonDataModels.Add(newjsonDataModel);
+        }
+        
         db.SaveChanges();
+
+        //Add new everytime json is saved
+        // var jsonDataModel = new JsonDataModel
+        //     {
+        //         JsonData = jsonData
+        //     };
+        // db.JsonDataModels.Add(jsonDataModel);
+        // db.SaveChanges();
     }
 
 
