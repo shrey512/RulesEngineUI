@@ -22,6 +22,7 @@ namespace RulesEngineEditor.Models
         public new string WorkflowName { get; set; }
         [JsonIgnore]
         public int Seq { get; set; }
+        public string ClientName { get; set; }
     }
     public class RuleData : Rule
     {
