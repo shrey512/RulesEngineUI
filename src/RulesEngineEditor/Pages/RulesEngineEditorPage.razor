@@ -45,13 +45,13 @@
     }
 
 
-    public List<RuleData> GetRules(string workflowName)
+    public List<RuleData> GetRules(string workflowName, string clientname)
     {
         List<RuleData> filteredRules = new List<RuleData>();
         List<WorkflowData> workflows = GetWorkflows();
         foreach (var workflow in workflows)
         {
-            if (workflowName == "ALL" || workflow.WorkflowName == workflowName)
+            if ((workflowName == "ALL" || workflow.WorkflowName == workflowName) && (clientname == "ALL" || workflow.ClientName == clientname))
             {
                 if (workflow.Rules != null)
                 {
@@ -108,65 +108,26 @@
         }
     }
 
+
     // List<RuleData> GetFilteredRules(string workflowName)
     // {
-    //     if(workflowName == null)
+    //     if(workflowName == null || workflowName == "ALL")
     //     {
-    //         return new List<RuleData>();
-    //     }
-    //     if(workflowName == "ALL")
-    //     {
-    //         if (CurrentClient == "ALL")
-    //         {
-    //             return GetRules("ALL").ToList();
-    //         }
-    //         else
-    //         {
-    //             return GetRules(CurrentClient).Where(rule => clientModels.Any(cm => cm.Client == CurrentClient)).ToList();
-    //         }
+    //         return GetRules("ALL").ToList();
     //     }
     //     else
     //     {
-    //         var workflow = GetWorkflows().FirstOrDefault(w => w.WorkflowName == workflowName);
-    //         if(workflow != null)
+    //         var workflow = GetWorkflows().FirstOrDefault(w => w.WorkflowName == workflowName && w.ClientName == CurrentClient);
+    //         if(workflow != null && workflow.Rules != null)
     //         {
-    //             if(CurrentClient == "ALL")
-    //             {
-    //                 return workflow.Rules ?? new List<RuleData>();
-    //             }
-    //             else
-    //             {
-    //                 return workflow.Rules.Where(rule => clientModels.Any(cm => cm.Client == CurrentClient)).ToList();
-    //             }
+    //             return workflow.Rules.ToList();
     //         }
     //         else
     //         {
     //             return new List<RuleData>();
     //         }
     //     }
-
     // }
-
-
-    List<RuleData> GetFilteredRules(string workflowName)
-    {
-        if(workflowName == null || workflowName == "ALL")
-        {
-            return GetRules("ALL").ToList();
-        }
-        else
-        {
-            var workflow = GetWorkflows().FirstOrDefault(w => w.WorkflowName == workflowName && w.ClientName == CurrentClient);
-            if(workflow != null && workflow.Rules != null)
-            {
-                return workflow.Rules.ToList();
-            }
-            else
-            {
-                return new List<RuleData>();
-            }
-        }
-    }
 
 
 
@@ -199,7 +160,7 @@
                         {
                             <option value="">ALL</option>
                         }
-                        @foreach (var rl in GetRules(CurrentWorkflowName))
+                        @foreach (var rl in GetRules(CurrentWorkflowName,CurrentClient))
                         {
                             <option value="@rl.RuleName">@rl.RuleName</option>
                         }
@@ -238,7 +199,7 @@
     }
     @if (IsButtonEnabled("AddWorkflow"))
     {
-        <button title="Add Workflow" class="reeditor_button" @onclick="AddWorkflow">Add</button>
+        <button title="Add Workflow" class="reeditor_button" @onclick="AddWorkflow">Add Workflow</button>
 
         <span>&nbsp;</span>
     }
