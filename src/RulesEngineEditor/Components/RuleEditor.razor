@@ -13,13 +13,13 @@
 
 <sp_grid_rules>
     <div>Rule Name</div>
-    <div>Operator</div>
+    @* <div>Operator</div> *@
     <div>Success Event</div>
     <div>Error Message</div>
     <div>Expression</div>
     <div>Actions</div>
     <div>Enabled</div>
-    <div>Delete</div>
+    @* <div>Delete</div> *@
 </sp_grid_rules>
 <EditForm EditContext="@EditContext">
     <DataAnnotationsValidator />
@@ -32,7 +32,7 @@
                 <blockquote class="reeditor_blockquote @RuleStyle(rule)">@rule.ExceptionMessage</blockquote>
             }
         </div>
-        <div>
+        @* <div>
             <InputSelect ValueExpression="@(()=>rule.Operator)" Value="@rule.Operator" class="form-control" ValueChanged="((string value) => OnValueChanged(value))">
                 <option value="null"></option>
                 <option value="And">And</option>
@@ -40,7 +40,7 @@
                 <option value="Or">Or</option>
                 <option value="OrElse">OrElse</option>
             </InputSelect>
-        </div>
+        </div> *@
         <div>
             <InputTextArea rows="5" class="form-control jsonTextArea" @bind-Value="@rule.SuccessEvent" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
         </div>

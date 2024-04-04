@@ -21,6 +21,8 @@
 
 
 @functions {
+    //private RulesEngineEditorDbContext db;
+
     List<ClientModel> clientModels = new List<ClientModel>()
     {
         new ClientModel {Id=1,Client="ABC",WorkflowName="Eligibility"},
@@ -31,7 +33,8 @@
     {
         return state ? "reeditor_" + suffix : "";
     }
-    public WorkflowData[] GetWorkflows()
+
+    public List<WorkflowData> GetWorkflows()
     {
         List<WorkflowData> workflows = new List<WorkflowData>();
         WorkflowData wd = new WorkflowData();
@@ -39,32 +42,14 @@
         workflows.Add(wd);
 
         workflows.AddRange(WorkflowService.Workflows.OrderBy(o => o.WorkflowName));
-        return workflows.ToArray();
+        return workflows;
     }
 
-
-    // public List<string> GetRules()
-    // {
-    //     List<string> ruleNames = new List<string>();
-    //     WorkflowData[] workflows = GetWorkflows();
-    //     ruleNames.Add("ALL");
-    //     foreach(var workflow in workflows)
-    //     {
-    //         if(workflow.Rules != null)
-    //         {
-    //             foreach(var rule in workflow.Rules)
-    //             {
-    //                 ruleNames.Add(rule.RuleName);
-    //             }
-    //         }
-    //     } 
-    //     return ruleNames;
-    // }
 
     public List<RuleData> GetRules(string workflowName)
     {
         List<RuleData> filteredRules = new List<RuleData>();
-        WorkflowData[] workflows = GetWorkflows();
+        List<WorkflowData> workflows = GetWorkflows();
         foreach (var workflow in workflows)
         {
             if (workflowName == "ALL" || workflow.WorkflowName == workflowName)
@@ -82,7 +67,7 @@
     {
         //List<ClientModel> clientModels = new List<ClientModel>();
         List<string> clientNames = new List<string>();
-        
+
         clientNames.Add("ALL");
         foreach(var client in clientModels)
         {
@@ -91,12 +76,116 @@
         return clientNames;
     }
 
+
+    //filter client
+
+    void OnClientChange(ChangeEventArgs e)
+    {
+        CurrentClient = e.Value?.ToString();
+        CurrentWorkflowName = null;
+        CurrentRuleName = null;
+    }
+
+    List<WorkflowData> GetFilteredWorkflows()
+    {
+        if(CurrentClient == "ALL")
+        {
+            return GetWorkflows();
+        }
+        else
+        {
+            var clientfilteredworkflows = new List<WorkflowData>();
+            foreach(var workflow in GetWorkflows())
+            {
+                if (clientModels.Any(cm => cm.WorkflowName == workflow.WorkflowName && cm.Client == CurrentClient))
+                {
+                    clientfilteredworkflows.Add(workflow);
+                }
+            }
+            return clientfilteredworkflows;
+        }
+    }
+
+    List<RuleData> GetFilteredRules(string workflowName)
+    {
+        if(workflowName == null)
+        {
+            return new List<RuleData>();
+        }
+        if(workflowName == "ALL")
+        {
+            if (CurrentClient == "ALL")
+            {
+                return GetRules("ALL").ToList();
+            }
+            else
+            {
+                return GetRules(CurrentClient).Where(rule => clientModels.Any(cm => cm.Client == CurrentClient)).ToList();
+            }
+        }
+        else
+        {
+            var workflow = GetWorkflows().FirstOrDefault(w => w.WorkflowName == workflowName);
+            if(workflow != null)
+            {
+                if(CurrentClient == "ALL")
+                {
+                    return workflow.Rules ?? new List<RuleData>();
+                }
+                else
+                {
+                    return workflow.Rules.Where(rule => clientModels.Any(cm => cm.Client == CurrentClient)).ToList();
+                }
+            }
+            else
+            {
+                return new List<RuleData>();
+            }
+        }
+
+    }
+
+    // List<RuleData> GetFilteredRules(string workflowName)
+    // {
+    //     if(CurrentClient == "All")
+    //     {
+    //         return GetRules("ALL").ToList();
+    //     }  
+    //     else
+    //     {
+    //         if(workflowName == null)
+    //         {
+    //             return GetRules(CurrentClient).ToList();
+    //         }
+    //         else
+    //         {
+    //             var workflow = GetWorkflows().FirstOrDefault(w => w.WorkflowName == workflowName && clientModels.Any(cm=> cm.Client == CurrentClient));
+    //             if(workflow != null)
+    //             {
+    //                 if(workflow.Rules != null)
+    //                 {
+    //                     return workflow.Rules.ToList();
+    //                 }
+    //                 else
+    //                 {
+    //                     return new List<RuleData>();
+    //                 }
+    //             }
+    //             else
+    //             {
+    //                 return new List<RuleData>();
+    //             }
+    //         }
+    //     }
+        
+    // }
+
 }
 <div hidden="@(!ShowWorkflows)">
     <div style="display: flex;">
         <EditForm Model="currentclient" class="reeditor_button" style="width:200px">
             <label for="currentClient" style="width:200px; margin-top: 7px">Select Client:</label>
-            <InputSelect @bind-Value="CurrentClient" class="reeditor_button" title="Current Client">
+            <InputSelect @bind-Value="CurrentClient" class="reeditor_button" title="Current Client" @onchange="OnClientChange">
                 @foreach (var ct in GetClients())
                 {
                     <option value="@ct">@ct</option>
@@ -106,7 +195,7 @@
 
         <EditForm Model="currentWorkflow" class="reeditor_button" style="margin-right: 50px; margin-left: 50px;">
             <InputSelect @bind-Value="CurrentWorkflowName" class="reeditor_button" title="Current Workflow">
-                @foreach (var wf in GetWorkflows())
+                @foreach (var wf in GetFilteredWorkflows())
                 {
                     <option value="@wf.WorkflowName">@wf.WorkflowName</option>
                 }
@@ -120,7 +209,7 @@
                         {
                             <option value="">ALL</option>
                         }
-                        @foreach (var rl in GetRules(CurrentWorkflowName))
+                        @foreach (var rl in GetFilteredRules(CurrentWorkflowName))
                         {
                             <option value="@rl.RuleName">@rl.RuleName</option>
                         }
@@ -218,7 +307,7 @@
         </div>
         <div>
             <span class="JSONErrors">@workflowJSONErrors</span>
-            <textarea @bind="WorkflowsJSON" class="jsonTextArea" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            <textarea @bind="WorkflowsJSON" class="jsonTextArea" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly></textarea>
         </div>
     </div>
     <div hidden="@(ShowWorkflows)">
@@ -269,7 +358,7 @@
             </div>
             <div>
                 <span class="JSONErrors">@inputJSONErrors</span>
-                <textarea @bind="InputJSON" class="jsonTextArea" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                <textarea @bind="InputJSON" class="jsonTextArea" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly />
             </div>
         </div>
     </div>
