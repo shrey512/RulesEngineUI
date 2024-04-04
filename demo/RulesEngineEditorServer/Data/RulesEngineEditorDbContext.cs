@@ -28,6 +28,8 @@ namespace RulesEngineEditor.Data
 
         public DbSet<JsonDataModel> JsonDataModels { get; set; }
 
+        public DbSet<ClientModel> ClientTable { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

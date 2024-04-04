@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RulesEngineEditor.Data;
 
 namespace RulesEngineEditorServer.Migrations
 {
     [DbContext(typeof(RulesEngineEditorDbContext))]
-    partial class RulesEngineEditorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240403133225_Clienttable Migration")]
+    partial class ClienttableMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

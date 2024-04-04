@@ -6,6 +6,8 @@
 @using RulesEngineEditor.Components
 @inject NavigationManager NavigationManager
 @inject RulesEngineEditor.Services.WorkflowService WorkflowService
+@inject RulesEngineEditor.Services.RuleService RuleService
+
 @implements IDisposable
 
 <sp_grid_tabs>
@@ -16,7 +18,15 @@
     </div>
 </sp_grid_tabs>
 <br />
+
+
 @functions {
+    List<ClientModel> clientModels = new List<ClientModel>()
+    {
+        new ClientModel {Id=1,Client="ABC",WorkflowName="Eligibility"},
+        new ClientModel {Id=1,Client="XYZ",WorkflowName="Discount"},
+    };
+
     public string IsPressed(bool state, string suffix)
     {
         return state ? "reeditor_" + suffix : "";
@@ -31,16 +41,104 @@
         workflows.AddRange(WorkflowService.Workflows.OrderBy(o => o.WorkflowName));
         return workflows.ToArray();
     }
+
+
+    // public List<string> GetRules()
+    // {
+    //     List<string> ruleNames = new List<string>();
+    //     WorkflowData[] workflows = GetWorkflows();
+    //     ruleNames.Add("ALL");
+    //     foreach(var workflow in workflows)
+    //     {
+    //         if(workflow.Rules != null)
+    //         {
+    //             foreach(var rule in workflow.Rules)
+    //             {
+    //                 ruleNames.Add(rule.RuleName);
+    //             }
+    //         }
+    //     } 
+    //     return ruleNames;
+    // }
+
+    public List<RuleData> GetRules(string workflowName)
+    {
+        List<RuleData> filteredRules = new List<RuleData>();
+        WorkflowData[] workflows = GetWorkflows();
+        foreach (var workflow in workflows)
+        {
+            if (workflowName == "ALL" || workflow.WorkflowName == workflowName)
+            {
+                if (workflow.Rules != null)
+                {
+                    filteredRules.AddRange(workflow.Rules);
+                }            
+            }
+        }
+        return filteredRules;
+    }
+
+    public List<string> GetClients()
+    {
+        //List<ClientModel> clientModels = new List<ClientModel>();
+        List<string> clientNames = new List<string>();
+        
+        clientNames.Add("ALL");
+        foreach(var client in clientModels)
+        {
+            clientNames.Add(client.Client);
+        }
+        return clientNames;
+    }
+
 }
 <div hidden="@(!ShowWorkflows)">
-    <EditForm Model="currentWorkflow" class="reeditor_button">
-        <InputSelect @bind-Value="CurrentWorkflowName" class="reeditor_button" title="Current Workflow">
-            @foreach (var wf in GetWorkflows())
+    <div style="display: flex;">
+        <EditForm Model="currentclient" class="reeditor_button" style="width:200px">
+            <label for="currentClient" style="width:200px; margin-top: 7px">Select Client:</label>
+            <InputSelect @bind-Value="CurrentClient" class="reeditor_button" title="Current Client">
+                @foreach (var ct in GetClients())
+                {
+                    <option value="@ct">@ct</option>
+                }
+            </InputSelect>
+        </EditForm>
+
+        <EditForm Model="currentWorkflow" class="reeditor_button" style="margin-right: 50px; margin-left: 50px;">
+            <InputSelect @bind-Value="CurrentWorkflowName" class="reeditor_button" title="Current Workflow">
+                @foreach (var wf in GetWorkflows())
+                {
+                    <option value="@wf.WorkflowName">@wf.WorkflowName</option>
+                }
+            </InputSelect>
+
+            @if (!string.IsNullOrEmpty(CurrentWorkflowName))
             {
-                <option value="@wf.WorkflowName">@wf.WorkflowName</option>
+                <div>
+                    <InputSelect @bind-Value="CurrentRuleName" class="reeditor_button" title="Current Rule">
+                        @if(CurrentWorkflowName == "ALL")
+                        {
+                            <option value="">ALL</option>
+                        }
+                        @foreach (var rl in GetRules(CurrentWorkflowName))
+                        {
+                            <option value="@rl.RuleName">@rl.RuleName</option>
+                        }
+                    </InputSelect>
+                </div>
+            }
+        </EditForm>
+    </div>
+    @* <EditForm Model="currentRule" class="reeditor_button">
+        <InputSelect @bind-Value="CurrentRuleName" class="reeditor_button" title="Current Rule">
+            @foreach (var rl in GetRules())
+            {
+                <option value="@rl">@rl</option>
             }
         </InputSelect>
-    </EditForm>
+    </EditForm> *@
+    <br />
+
     @if (IsButtonEnabled("NewWorkflows"))
     {
         <button title="New Workflows" class="reeditor_button" @onclick="NewWorkflows">Reset</button>
@@ -94,6 +192,9 @@
                         </div>
                         <ScopedParams scopedParams=context.GlobalParams ScopedParamsChanged="WorkflowUpdate" />
                     </div>
+                </Dropzone>
+                <Dropzone TItem="WorkflowData" OnItemDrop="@((i)=>WorkflowDragEnd(i))" Items="@(CurrentWorkflowName == null || CurrentWorkflowName == "ALL" ? WorkflowService.Workflows : WorkflowService.Workflows.Where(w => w.WorkflowName == CurrentWorkflowName).ToList())" Class="reeditor_dragdrop">
+                    
                 </Dropzone>
             }
             else

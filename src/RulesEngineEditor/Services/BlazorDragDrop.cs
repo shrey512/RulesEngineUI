@@ -17,6 +17,7 @@ namespace RulesEngineEditor.Services
         {
             Plk.Blazor.DragDrop.ServiceCollectionExtensions.AddBlazorDragDrop(services);
             services.AddSingleton(new WorkflowService());
+            services.AddSingleton(new RuleService());
             return services;
         }
     }

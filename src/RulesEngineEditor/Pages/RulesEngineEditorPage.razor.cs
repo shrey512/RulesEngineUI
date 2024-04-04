@@ -23,6 +23,10 @@ namespace RulesEngineEditor.Pages
     {
         [Parameter]
         public string CurrentWorkflowName { get; set; } = "ALL";
+        [Parameter]
+        public string CurrentRuleName { get; set; } = "ALL";
+        [Parameter]
+        public string CurrentClient { get; set; } = "ALL";
 
         [Parameter]
         public RulesEngine.RulesEngine EditorRulesEngine { get { return _rulesEngine; } set { _rulesEngine = value; } }
@@ -39,6 +43,10 @@ namespace RulesEngineEditor.Pages
         private RulesEngine.RulesEngine _rulesEngine = new RulesEngine.RulesEngine(new string[0], null);
 
         WorkflowData currentWorkflow = new WorkflowData();
+
+        RuleData currentRule = new RuleData();
+
+        ClientModel currentclient = new ClientModel();
 
         [Parameter]
         public EventCallback<Workflow[]> WorkflowsChanged { get; set; }
@@ -419,4 +427,5 @@ namespace RulesEngineEditor.Pages
         DownloadInputAttributes.Add("download", "RulesEngineInputs.json");
     }
 }
+    
 }
