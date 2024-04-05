@@ -76,7 +76,7 @@ namespace RulesEngineEditor.Pages
         public EventCallback<string> InputJSONChanged { get; set; }
 
 
-        private List<MenuButton> menuButtons = new List<MenuButton> { new MenuButton("NewWorkflows"), new MenuButton("DownloadWorkflows"), new MenuButton("ImportWorkflows"), new MenuButton("AddWorkflow"), new MenuButton("SaveWorkflow", false), new MenuButton("NewInputs"), new MenuButton("DownloadInputs"), new MenuButton("ImportInputs"), new MenuButton("AddInput") };
+        private List<MenuButton> menuButtons = new List<MenuButton> { new MenuButton("NewWorkflows"), new MenuButton("DownloadWorkflows"), new MenuButton("ImportWorkflows"), new MenuButton("AddWorkflow"), new MenuButton("AddExistWorkflow"), new MenuButton("SaveWorkflow", false), new MenuButton("NewInputs"), new MenuButton("DownloadInputs"), new MenuButton("ImportInputs"), new MenuButton("AddInput") };
         [Parameter]
         public List<MenuButton> MenuButtons { get { return menuButtons; } set { value.ForEach(v => menuButtons.Single(w => w.Name == v.Name).Enabled = v.Enabled); } } 
         
@@ -158,6 +158,16 @@ namespace RulesEngineEditor.Pages
     }
 
     private void AddWorkflow()
+    {
+        WorkflowData workflow = new WorkflowData();
+        workflow.GlobalParams = new List<ScopedParamData>();
+        workflow.Rules = new List<RuleData>();
+        workflow.Seq = -1;
+        WorkflowService.Workflows.Insert(0, workflow);
+        StateHasChanged();
+    }
+
+    private void AddExistWorkflow()
     {
         WorkflowData workflow = new WorkflowData();
         workflow.GlobalParams = new List<ScopedParamData>();
@@ -426,6 +436,32 @@ namespace RulesEngineEditor.Pages
         DownloadInputAttributes.Add("href", "data:text/plain;charset=utf-8," + JsonNormalizer.Normalize(InputJSON));
         DownloadInputAttributes.Add("download", "RulesEngineInputs.json");
     }
-}
+
+
+
+        private bool showAddWorkflowModal = false;
+        private string selectedClient;
+        private string selectedWorkflow;
+        private List<string> clients = new List<string> { "Client1", "Client2", "Client3" }; // Populate with actual client names
+        private List<string> workflows = new List<string> { "Workflow1", "Workflow2", "Workflow3" }; // Populate with actual workflow names
+
+        private void ShowAddWorkflowModal()
+        {
+            showAddWorkflowModal = true;
+        }
+
+        private void CloseModal()
+        {
+            showAddWorkflowModal = false;
+        }
+
+        private void AddExistingWorkflow()
+        {
+            // Logic to add existing workflow to selected client
+            // You can use selectedClient and selectedWorkflow variables here
+            // After adding, close the modal
+            showAddWorkflowModal = false;
+        }
+    }
     
 }

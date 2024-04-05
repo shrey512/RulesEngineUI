@@ -203,6 +203,15 @@
 
         <span>&nbsp;</span>
     }
+    @if (IsButtonEnabled("AddExistWorkflow"))
+    {
+        <!-- Button to trigger the modal -->
+        <button title="Add Existing Workflow" class="reeditor_button" style="width: 190px" @onclick="ShowAddWorkflowModal">Add Existing Workflow</button>
+
+        <span>&nbsp;</span>
+    }
+    
+
     @if (IsButtonEnabled("SaveWorkflow"))
     {
         <button title="Save Workflow" class="reeditor_button" @onclick="SaveWorkflow">Save</button>
@@ -211,6 +220,36 @@
     }
     <button class="reeditor_button @IsPressed(sort_wf, "button_depressed")" @onclick="(() => sort_wf = !sort_wf)">Arrange</button>
     <span>&nbsp;</span>
+
+    <!-- Modal for adding existing workflow -->
+    @if (showAddWorkflowModal)
+    {
+        <div>
+            <div class="modal-content">
+                <span class="close" @onclick="CloseModal">&times;</span>
+                <h2>Add Existing Workflow</h2>
+                <div>
+                    <label for="clientDropdown">Select Client:</label>
+                    <select id="clientDropdown" @bind="selectedClient">
+                        @foreach (var workflowdata in WorkflowDatas)
+                        {
+                            <option value="@workflowdata.ClientName">@workflowdata.ClientName</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label for="workflowDropdown">Select Workflow:</label>
+                    <select id="workflowDropdown" @bind="selectedWorkflow">
+                        @foreach (var workflowdata in WorkflowDatas)
+                        {
+                            <option value="@workflowdata.WorkflowName">@workflowdata.WorkflowName</option>
+                        }
+                    </select>
+                </div>
+                <button @onclick="AddExistingWorkflow">Add</button>
+            </div>
+        </div>
+    }
 </div>
 
 @if (WorkflowService.Workflows.Count > 0)
